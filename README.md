@@ -60,6 +60,22 @@ The application starts on `http://localhost:5000`. Open it in a browser, enter y
 This app is not production grade and as such has some bugs. In the worst of cases, just remove `antara.db` and the `images/` folder and restart the server.
 
 
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Web framework | Flask |
+| Database | SQLite (via Python's built-in `sqlite3`) |
+| Face recognition | InsightFace `buffalo_l` model |
+| Model inference | ONNX Runtime (CPU) |
+| Image loading | OpenCV, Pillow, pillow-heif |
+| Numerical ops | NumPy |
+| HTML scraping | BeautifulSoup4, Requests |
+| Linting / formatting | Ruff |
+| Static type checking | mypy |
+| Git hooks | pre-commit |
+
+
 ## Configuration
 
 All tunable values are in `config.py`:
