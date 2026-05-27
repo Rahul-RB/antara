@@ -26,24 +26,38 @@ Clone the repository and create a virtual environment:
 ```bash
 git clone <repo-url>
 cd antara
+
 python3 -m venv venv
 source venv/bin/activate
+
 python3 -m pip install -r requirements.txt
-```
 
-The first time the face recognition model is used it will be downloaded automatically by InsightFace (~200 MB).
-
-## Running locally
-
-```bash
-source venv/bin/activate
 python3 app.py
 ```
 
-The application starts on `http://0.0.0.0:5000`. Open it in a browser, enter your Anuraga and Aseema credentials on the login page and then search by profile ID.
+The application starts on `http://localhost:5000`. Open it in a browser, enter your Anuraga and Aseema credentials on the login page and then search by profile ID.
+
+> NOTE: The first time the face recognition model is used it will be downloaded automatically by InsightFace (~200 MB).
 
 
 ## Demo
+
+1. Open http://localhost:5000 and login to both Anuraga and Aseema
+![Login Page](docs/d1.png)
+
+2. Either enter an Aseema ID and find similar looking Anuraga profiles
+![Search by Aseema ID](docs/d2.png)
+![Search by Aseema ID](docs/d3.png)
+
+3. OR enter an Anuraga ID and find similar looking Aseema profiles
+![Search by Anuraga ID](docs/d4.png)
+
+4. Press YES if the match is accurate. This stores the match in DB to avoid duplicate queries in future.
+
+
+## Handling issues
+
+This app is not production grade and as such has some bugs. In the worst of cases, just remove `antara.db` and the `images/` folder and restart the server.
 
 
 ## Configuration
