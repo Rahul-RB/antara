@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Antara</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <h1>Antara</h1>
+    <p class="login-subtitle">Profile matcher for AN &amp; AS</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="flash">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/login">
+      <fieldset>
+        <legend>Anuraga (AN)</legend>
+        <label>Username
+          <input type="text" name="an_username" required autocomplete="username">
+        </label>
+        <label>Password
+          <input type="password" name="an_password" required autocomplete="current-password">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Aseema (AS)</legend>
+        <label>Email
+          <input type="email" name="as_email" required autocomplete="email">
+        </label>
+        <label>Password
+          <input type="password" name="as_password" required autocomplete="current-password">
+        </label>
+      </fieldset>
+
+      <button type="submit" class="btn-primary">Sign in to both sites</button>
+    </form>
+  </div>
+</body>
+</html>
