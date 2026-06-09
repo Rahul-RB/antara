@@ -20,6 +20,16 @@ def job_status(job_id: str) -> tuple[flask.Response, int]:
     return jsonify(job), 200
 
 
+@api_bp.route("/job/<job_id>/cancel", methods=["POST"])
+def cancel_job(job_id: str) -> tuple[flask.Response, int]:
+    key = session.get("session_key")
+    if not key or not session_manager.get(key):
+        return jsonify({"error": "Not logged in"}), 401
+    db.cancel_job(job_id)
+    logger.info("Job %s cancelled by user", job_id[:8])
+    return jsonify({"ok": True}), 200
+
+
 @api_bp.route("/confirm", methods=["POST"])
 def confirm_match() -> tuple[flask.Response, int]:
     key = session.get("session_key")

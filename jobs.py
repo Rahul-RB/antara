@@ -16,6 +16,47 @@ logger = logging.getLogger(__name__)
 _executor = ThreadPoolExecutor(max_workers=1)
 
 
+def submit_load_profile_job(source_site: str, source_id: str, session_key: str) -> str:
+    job_id = str(uuid.uuid4())
+    db.create_job(job_id, source_site, source_id)
+    logger.info("Load-profile job %s submitted — %s/%s", job_id[:8], source_site.upper(), source_id)
+    _executor.submit(_run_load_profile_job, job_id, source_site, source_id, session_key)
+    return job_id
+
+
+def _run_load_profile_job(job_id: str, source_site: str, source_id: str, session_key: str) -> None:
+    short = job_id[:8]
+    logger.info("[%s] Load-profile job started", short)
+    db.update_job(job_id, "running")
+    try:
+        session_data = session_manager.get(session_key)
+        if not session_data:
+            msg = "Session expired. Please log in again."
+            logger.warning("[%s] %s", short, msg)
+            db.update_job(job_id, "error", error=msg)
+            return
+
+        src_scraper = get_scraper(source_site)
+        src_scraper._session = session_data[f"{source_site}_session"]
+
+        logger.info("[%s] Fetching profile %s/%s", short, source_site.upper(), source_id)
+        source_profile = src_scraper.get_profile(source_id)
+        if not source_profile:
+            msg = f"Profile {source_id} not found on {source_site.upper()}."
+            logger.warning("[%s] %s", short, msg)
+            db.update_job(job_id, "error", error=msg)
+            return
+
+        db.upsert_profile(source_site, source_id, source_profile)
+        db.update_job(job_id, "done", result={"source": source_profile})
+        logger.info("[%s] Load-profile job done", short)
+
+    except Exception:
+        tb = traceback.format_exc()
+        logger.error("[%s] Load-profile error:\n%s", short, tb)
+        db.update_job(job_id, "error", error=tb)
+
+
 def submit_job(source_site: str, source_id: str, session_key: str) -> str:
     job_id = str(uuid.uuid4())
     db.create_job(job_id, source_site, source_id)
@@ -68,6 +109,10 @@ def _run_job(job_id: str, source_site: str, source_id: str, session_key: str) ->
         # Write source profile immediately so the frontend can display it while searching
         db.update_job(job_id, "running", result={"source": source_profile, "matches": []})
 
+        if db.is_job_cancelled(job_id):
+            logger.info("[%s] Job cancelled", short)
+            return
+
         image_urls = source_profile.get("image_urls") or src_scraper.get_profile_images(
             source_profile
         )
@@ -112,6 +157,9 @@ def _run_job(job_id: str, source_site: str, source_id: str, session_key: str) ->
 
         results: list[dict[str, Any]] = []
         for i, candidate in enumerate(candidates):
+            if db.is_job_cancelled(job_id):
+                logger.info("[%s] Job cancelled during candidate processing", short)
+                return
             cand_id = candidate["profile_id"]
             try:
                 cand_images = tgt_scraper.get_profile_images(candidate)

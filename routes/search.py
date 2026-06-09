@@ -45,6 +45,31 @@ def search_page() -> ResponseReturnValue:
     return render_template("search.html")
 
 
+@search_bp.route("/load-profile", methods=["POST"])
+def load_profile() -> ResponseReturnValue:
+    key = _require_session()
+    if not key:
+        return jsonify({"error": "Not logged in"}), 401
+
+    profile_id = request.json.get("profile_id", "").strip()
+    if not profile_id:
+        return jsonify({"error": "Profile ID is required"}), 400
+
+    source_site = _detect_site(profile_id)
+    if not source_site:
+        return jsonify(
+            {
+                "error": "Could not detect site from ID. "
+                "AN IDs start with AGM (e.g. AGM000000), "
+                "AS IDs look like SB000/00."
+            }
+        ), 400
+
+    logger.info("Load-profile request — %s/%s", source_site.upper(), profile_id)
+    job_id = jobs.submit_load_profile_job(source_site, profile_id, key)
+    return jsonify({"job_id": job_id, "source_site": source_site})
+
+
 @search_bp.route("/search", methods=["POST"])
 def start_search() -> ResponseReturnValue:
     key = _require_session()

@@ -195,6 +195,24 @@ def update_job(
     conn.close()
 
 
+def cancel_job(job_id: str) -> None:
+    conn = get_conn()
+    conn.execute(
+        "UPDATE jobs SET status='cancelled', updated_at=CURRENT_TIMESTAMP "
+        "WHERE id=? AND status IN ('pending', 'running')",
+        (job_id,),
+    )
+    conn.commit()
+    conn.close()
+
+
+def is_job_cancelled(job_id: str) -> bool:
+    conn = get_conn()
+    row = conn.execute("SELECT status FROM jobs WHERE id=?", (job_id,)).fetchone()
+    conn.close()
+    return row is not None and row["status"] == "cancelled"
+
+
 def get_job(job_id: str) -> dict[str, dict[typing.Any, typing.Any]] | None:
     conn = get_conn()
     row = conn.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
